@@ -193,6 +193,21 @@ void JGINYUEInternalUSBV2Controller::WriteZoneMode
     unsigned char   Direction
     )
 {
+    /*-----------------------------------------------------*\
+    | Sending Num_LED = 0 to the firmware is known to cause |
+    | it to lose/corrupt its state (observed on JGINYUE     |
+    | B450I-PLUS/ARGB: default color lost, no visible       |
+    | effect). This happens when a mode is applied before   |
+    | the zone LED count has been configured manually in    |
+    | the UI. Guard against it instead of writing garbage   |
+    | to the device.                                        |
+    \*-----------------------------------------------------*/
+    if(Num_LED == 0)
+    {
+        LOG_WARNING("[JGINYUEInternalUSBV2Controller] Refusing to write zone mode with Num_LED=0 for area 0x%02X (zone LED count not configured). Please set the zone size in Devices > Edit Zone before applying a mode.", Area);
+        return;
+    }
+
     unsigned char   usb_buf[64];
     memset(usb_buf, 0x00, sizeof(usb_buf));
     unsigned char   num_color = (unsigned char)rgb.size();
